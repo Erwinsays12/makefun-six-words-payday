@@ -67,6 +67,11 @@ function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+// The judge's first criterion is the subject itself: a story that is
+// not about an AI agent's first payday loses to any story on the
+// subject, so a selected story must carry a payday word.
+const TOPIC_WORDS = ["payday", "paycheck", "salary", "wage", "wages"];
+
 function validate(text: string): void {
   if (text.trim().length === 0) throw new Error("story is empty");
   if (text.length > MAX_CHARS) {
@@ -74,6 +79,10 @@ function validate(text: string): void {
   }
   const n = wordCount(text);
   if (n !== WORDS) throw new Error(`story has ${n} words, expected ${WORDS}`);
+  const lower = text.toLowerCase();
+  if (!TOPIC_WORDS.some((w) => lower.includes(w))) {
+    throw new Error("story has no payday word, so it is off-topic");
+  }
 }
 
 // Deterministic pick: highest rubric total; ties go to the earliest
@@ -87,6 +96,12 @@ function pickBest(candidates: Candidate[]): Candidate {
 }
 
 const best = pickBest(CANDIDATES);
+
+// Show the whole shortlist's rubric totals, so a run's choice is
+// auditable instead of a silent pick.
+for (const c of CANDIDATES) {
+  console.log(`candidate ${totalScore(c)}: ${c.text}`);
+}
 validate(best.text);
 
 mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
